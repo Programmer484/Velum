@@ -31,17 +31,19 @@ jobs:
       - name: Install Snyk CLI
         run: npm install -g snyk
 
+      - name: Export requirements.txt
+        working-directory: backend
+        run: uv export --format requirements-txt > requirements.txt
+
       - name: Run Snyk to check for vulnerabilities
         working-directory: backend
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        # Output sarif to the root directory
-        run: snyk test --sarif-file-output=../snyk.sarif || true
+        run: snyk test --file=requirements.txt --sarif-file-output=snyk.sarif || true
 
       - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
-          # Look for sarif in the root directory
-          sarif_file: snyk.sarif
+          sarif_file: backend/snyk.sarif
