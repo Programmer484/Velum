@@ -16,30 +16,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Install uv
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
-      # Export requirements.txt for Snyk
-      - name: Export requirements
+      - name: Install dependencies
         working-directory: backend
-        run: uv export --format requirements-txt --output requirements.txt
+        run: uv sync --frozen --all-groups
 
-      # Install Snyk CLI
       - name: Install Snyk CLI
         run: npm install -g snyk
 
-      # Run Snyk
       - name: Run Snyk to check for vulnerabilities
         working-directory: backend
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk test --file=requirements.txt --sarif-file-output=snyk.sarif || true
+        # Output sarif to the root directory
+        run: snyk test --sarif-file-output=../snyk.sarif || true
 
-      # Upload result
       - name: Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
-          sarif_file: backend/snyk.sarif
+          # Look for sarif in the root directory
+          sarif_file: snyk.sarif
