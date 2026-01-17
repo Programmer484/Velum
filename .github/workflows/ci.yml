@@ -1,0 +1,10 @@
+name: CI
+on: [push]
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+      - run: pip install ruff
+      - run: ruff check .  # Fails if syntax is bad or imports are unused
